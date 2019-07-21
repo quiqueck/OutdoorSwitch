@@ -1,0 +1,13 @@
+.pio
+.pioenvs
+.piolibdeps
+.browse.c_cpp.db
+.browse.c_cpp.db-shm
+.browse.c_cpp.db-wal
+c_cpp_properties.json
+launch.json
+settings.json
+secret.h
+include/key.h
+include/x509.h
+node_modules
