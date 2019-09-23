@@ -25,8 +25,8 @@
 #include <FastLED.h>
 
 #define POWER_LED 13
-#define TEST_LED 0
-#define NUMPIXELS 10
+#define TEST_LED 1
+#define NUMPIXELS 300
 #define DATA_PIN 2
 
 
@@ -71,12 +71,13 @@ void loop() {
   static int ledcol = 0;
   if ((millis() - ledup) > 50){
     ledup = millis();
-    ledcol += 10;
+    ledcol += 1;
     Serial.print("Color: ");
     Serial.println(ledcol);
     if (ledcol > 0xff) ledcol-=0xff;
     for (int i=0; i<NUMPIXELS; i++){
       leds[i] = CHSV((ledcol + (0xff*i)/NUMPIXELS) % 0xFF, 0xFF, 0xFF);
+      //leds[i] = CRGB(0xff, 0xff, 0xff);
     }
     FastLED.show();
   }
