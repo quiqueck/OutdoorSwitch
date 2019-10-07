@@ -21,7 +21,8 @@ ESP8266WebServer webServerSecure(443);
 #include <ESP8266WebServer.h>
 ESP8266WebServer webServer(80);
 #endif
-
+#include <ESP8266HTTPClient.h>
+HTTPClient http;
 
 #include "Relay.h"
 #include "OTA.h"

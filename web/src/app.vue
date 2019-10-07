@@ -2,18 +2,18 @@
     <div class="container">
         <div class="row">
             <div class="col-6">
-                <SwitchState name="Kugellampen" buttonid="0"/>
+                <SwitchState name="Fliegenpilz" buttonid="0"/>
             </div>
             <div class="col-6">
-                <SwitchState name="Ringlichter" buttonid="1"/>
+                <SwitchState name="Gartenhaus" buttonid="1"/>
             </div>
         </div>
         <div class="row">
             <div class="col-6">
-                <SwitchState name="Steckdose Gartenhaus" buttonid="2"/>
+                <SwitchState name="Hochbeet" buttonid="2"/>
             </div>
             <div class="col-6">
-                <SwitchState name="Steckdose Wohnzimmer" buttonid="3"/>
+                <SwitchState name="LED Terasse" buttonid="3"/>
             </div>
         </div>
         <div class="row">

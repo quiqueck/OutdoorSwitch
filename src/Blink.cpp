@@ -26,7 +26,7 @@
 
 #define POWER_LED 13
 #define TEST_LED 1
-#define NUMPIXELS 300
+#define NUMPIXELS 369
 #define DATA_PIN 2
 
 
@@ -61,30 +61,122 @@ void setup() {
   #endif
 
   FastLED.setBrightness(0xee);
-  FastLED.addLeds<WS2812B, DATA_PIN>(leds, NUMPIXELS);
+  FastLED.addLeds<WS2812B, DATA_PIN, EOrder::GRB>(leds, NUMPIXELS);
+
+  for (int i=0; i<NUMPIXELS; i++) leds[i] = CRGB(0,0,0);
 }
 
+inline uint16_t LEDIdx(int i){
+  if (i>295) return i + 6;
+  return i + 2;
+}
+
+inline uint16_t LEDCount(){
+  return NUMPIXELS - 6;
+}
+
+double playTime = 0;
 // the loop function runs over and over again forever
 void loop() {
-  #if TEST_LED==1
   static long ledup = millis();
   static int ledcol = 0;
-  if ((millis() - ledup) > 50){
-    ledup = millis();
-    ledcol += 1;
-    Serial.print("Color: ");
-    Serial.println(ledcol);
-    if (ledcol > 0xff) ledcol-=0xff;
-    for (int i=0; i<NUMPIXELS; i++){
-      leds[i] = CHSV((ledcol + (0xff*i)/NUMPIXELS) % 0xFF, 0xFF, 0xFF);
-      //leds[i] = CRGB(0xff, 0xff, 0xff);
-    }
-    FastLED.show();
-  }
-  #endif
+  
+  
 
   #ifdef __MY_WEB_SERVER_H__
   server_loop();
   #endif
+
+  #if TEST_LED==1
+  bool staticLight = (LEDMode == 0);
+  if (!LEDOn || (staticLight && LEDMode == lastMode)){
+    delay(100);
+    playTime = 0;    
+  } else {
+    unsigned long now = millis();
+    unsigned long delta = now - ledup;
+    static int pos = 0;    
+    if (delta > 20){   
+      playTime += delta * LEDSpeed / 2000.0;
+      ledup = now;
+      ledcol = ((int)round(playTime)) % 0x100;
+      int sub = fmax(2, LEDSpeed * 2);
+      if (ledcol > 0xff) ledcol-=0xff;
+      if (LEDMode == 5){
+          const int LOAD_STEPS = 40;
+          const int count = 12;
+          int offset = 0;
+          if (pos> (count+2) * LOAD_STEPS) {
+            offset = pos - (count+2) * LOAD_STEPS;
+          }
+          if (offset > LEDCount()/2 - count + 20 || lastMode != LEDMode) pos = 0;          
+          if (pos==0){
+            for (int k=0; k<NUMPIXELS; k++) leds[k] = CRGB(0,0,0);
+          }
+
+          if (offset>0){
+            pos += 1 + LEDSpeed/2;
+            for (int i=0; i<LEDCount()/2; i++){
+              const CRGB cc = (i>=offset && i<offset+count*2) ? color : CRGB(0,0,0);
+              leds[LEDIdx(i)] = cc;
+              leds[LEDIdx(LEDCount()-i-1)] = cc;
+            }
+          } else {
+            // int b = pos;
+            // for (int i=0; i<16; i++){            
+            //   leds[LEDIdx(20+i)] = CRGB(0,0, b%2 == 0?0:0xff);
+            //   b/=2;
+            // }            
+            
+            for (int i=1; i<8; i++) {
+              if ( pos >= (i-1) * LOAD_STEPS && pos <= i * LOAD_STEPS) {
+                const double ppos = pos - (i-1) * LOAD_STEPS;
+                CHSV c = rgb2hsv_approximate(color);
+                c.v = fmax(0, fmin(0xff, (ppos / LOAD_STEPS) * 0xFF));
+                leds[LEDIdx(i-1)] = c;
+                leds[LEDIdx(LEDCount()-i)] = c;
+
+                break;
+              }
+            }
+            
+            pos += 1 + LEDSpeed/5;
+          }
+      } else {
+        for (int i=0; i<LEDCount(); i++){
+          if (LEDMode == 0){
+            leds[LEDIdx(i)] = color;
+          } else if (LEDMode == 1) {
+            leds[LEDIdx(i)] = CHSV((ledcol + (0xff*LEDIdx(i))/LEDCount()) % 0x100, 0xFF, color.v);
+          } else if (LEDMode == 2) {
+            leds[LEDIdx(i)] = CHSV(ledcol % 0x100, 0xFF, color.v);          
+          } else if (LEDMode == 3 || LEDMode == 4){
+            if (random(10000)>9985 - LEDSpeed){
+              if (LEDMode == 3) {
+                leds[LEDIdx(i)] = color;
+              } else {
+                leds[LEDIdx(i)] = CHSV(random(0xff), 0xFF, color.v);
+              }
+            } else {
+              const int lsub = sub + random(fmax(3, sub/2));
+              //const CHSV c = rgb2hsv_approximate(leds[LEDIdx(i)]);
+              //leds[LEDIdx(i)] = CHSV(c.h, c.s, fmax(0, c.v - sub));
+              const CRGB c = leds[LEDIdx(i)];
+              leds[LEDIdx(i)] = CRGB(fmax(0, c.r - lsub), fmax(0, c.g - lsub), fmax(0, c.b - lsub));
+            }
+          } else if (LEDMode == 5){
+            //nothing to loop;
+          } else {
+            
+          }
+        }
+      }
+      lastMode = LEDMode;
+      FastLED.show();
+    }
+  }
+  #endif
+
+  
                          // wait for a second
 }
